@@ -1,0 +1,10 @@
+pip>=24.0
+streamlit
+pymongo
+ibm-watson
+matplotlib
+plotly
+langchain
+ibm-cloud-sdk-core
+fastapi
+pydotenv
