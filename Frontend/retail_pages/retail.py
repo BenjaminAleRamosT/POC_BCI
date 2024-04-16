@@ -96,14 +96,16 @@ def main_page(emp ,periodo='3Q23'):
     st.markdown("### Resumen Empresarial ‍💼")
     st.markdown("###### Principales Estados Financieros")
     
+    
+    # <------------------------------------| POWER BI |------------------------------------> #
+    # st.markdown("### Power BI 📊")
+    render_js(emp.name)
+
     # <------------------------------------| Tabla |------------------------------------> #
 
     st.table(emp.table.set_index('Trimestre'))
     st.markdown('----')
     
-    # <------------------------------------| POWER BI |------------------------------------> #
-    # st.markdown("### Power BI 📊")
-    render_js(emp.name)
 
     # <------------------------------------| Gráfico |------------------------------------> #
     # st.markdown('https://app.powerbi.com/view?r=eyJrIjoiMTAxODExM2MtYjUyZC00YTFiLWI2OTEtY2Y5ZjhjMGYwOGI4IiwidCI6ImIwNDY3OTRhLTA4MTktNDFmNi05NTE1LWI4MDkyNjYwNmExYiIsImMiOjR9', unsafe_allow_html=True)

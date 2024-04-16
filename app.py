@@ -58,7 +58,7 @@ if selected_sector == "Retail":
     "Resumen Sectorial": main_page,
     "otro": retail_page,
     }
-    page_names_to_empresa_list = ['Resumen Sectorial', 'Falabella', 'Cencosud', 'SMU', 'Hites', 'Forus', 'Tricot', 'Ripley', 'Hites']
+    page_names_to_empresa_list = ['Resumen Sectorial', 'Falabella', 'Cencosud', 'SMU', 'Hites', 'Forus', 'Tricot', 'Ripley']
     
     selected_page_2 = st.sidebar.selectbox("Selecciona Empresa", page_names_to_empresa_list)
 
