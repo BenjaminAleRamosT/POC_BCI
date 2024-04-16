@@ -49,9 +49,6 @@ def render_js(selected_option):
         filterType: models.FilterType.BasicFilter
       };
 
-
-
-
   dashboard.on('loaded', function() {
   dashboard.getPages().then(function (pages) {
       // Supongamos que queremos trabajar con la primera página
