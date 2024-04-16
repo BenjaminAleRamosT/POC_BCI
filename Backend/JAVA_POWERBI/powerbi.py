@@ -6,7 +6,7 @@ def render_js(selected_option):
     # Define el código HTML/JavaScript con la variable de Python
 
     if selected_option == 'Resumen Sectorial':
-        selected_option =  "Falabella', 'Cencosud', 'SMU', 'Hites', 'Forus', 'Tricot', 'Ripley', 'Hites"
+        selected_option =  "Falabella', 'Cencosud', 'SMU', 'Hites', 'Forus', 'Tricot', 'Ripley"
 
 
     html_code = """<script src="https://cdnjs.cloudflare.com/ajax/libs/powerbi-client/2.23.1/powerbi.js"></script>
@@ -19,6 +19,7 @@ def render_js(selected_option):
   var embedConfiguration = {
       type: 'report',
       tokenType: models.TokenType.Embed,
+      viewMode: models.ViewMode.View,
       accessToken: '"""+ tk.accessToken() +"""',
       embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=03e320e4-9d78-464f-a88e-53fca11121ea&groupId=48485820-2463-4595-b7e3-851c901e537d&w=2&config=eyJjbHVzdGVyVXJsIjoiaHR0cHM6Ly9XQUJJLVNPVVRILUNFTlRSQUwtVVMtQy1QUklNQVJZLXJlZGlyZWN0LmFuYWx5c2lzLndpbmRvd3MubmV0IiwiZW1iZWRGZWF0dXJlcyI6eyJ1c2FnZU1ldHJpY3NWTmV4dCI6dHJ1ZX19',
       id: '8d5d11b5-12ab-4944-ab6f-9361b8258ed2',
@@ -32,6 +33,7 @@ def render_js(selected_option):
 
   var dashboard = powerbi.embed(dashboardContainer, embedConfiguration);
 
+    
   var page
   var visual
   const basicFilter = {
