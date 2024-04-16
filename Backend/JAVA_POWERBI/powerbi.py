@@ -35,7 +35,8 @@ def render_js(selected_option):
 
   var dashboard = powerbi.embed(dashboardContainer, embedConfiguration);
 
-    
+    """
+    """
   var page
   var visual
   const basicFilter = {
