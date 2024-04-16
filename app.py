@@ -44,7 +44,7 @@ components.html("""
     document.head.appendChild(t);
   });
 </script>
-                """, height=318)
+                """, height=500, width=318)
                 
               
 

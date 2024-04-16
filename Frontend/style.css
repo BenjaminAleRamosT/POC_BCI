@@ -8,14 +8,14 @@ body {
 div .block-container.st-emotion-cache-z5fcl4.ea3mdgi5> :nth-child(1)> :nth-child(1)> :nth-child(1)> :nth-child(2){
     position: fixed;
     bottom: 0;
-    right: 13px;
+    right: 20px;
     z-index: 1;
 
-    /* height: 500px;
-    width: 500px; */
+    height: 500px;
+    width: 318px; 
     
-    background-color: rgba(0,0, 0, 0);
-    padding: 10px;
+    background-color: rgba(0, 0, 0, 0);
+    padding: 0px;
     border-top-right-radius: 10px;
 } 
 
