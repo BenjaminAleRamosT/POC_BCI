@@ -19,6 +19,9 @@ from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
+from  Backend.credentials.Mongo import get_mongo_client
+from Backend.emp.empresa import Empresa
+
 
 def add_file(filename=None, empresa=None, sector=None, periodo=None, year=None, trimestre=None, doc=None, key=None, resumen=None ):
     st.title('Aplicación de prueba')
@@ -104,7 +107,7 @@ def get_files(filename='Empresa', period='3Q23', api_key= 'api', client=None):
     dict_files = dict()
 
     client = client
-    db = client['test_pdf']
+    db = client['ibmclouddb']
     col_pdf = db['pdf']
 
     # obtenemos todos los files
@@ -125,6 +128,14 @@ def get_files(filename='Empresa', period='3Q23', api_key= 'api', client=None):
         
 def clear_submit():
     st.session_state["submit"] = False
+
+
+def create_summary(emp:Empresa,filename:str):
+    # buscaremos en la base de datos el te
+
+
+    
+
 
 def displayPDF(uploaded_file):
     
@@ -168,12 +179,6 @@ def get_transcript(file_id, filename, empresa, year, quarter):
     return "transcript"
 
 def get_upload_discovery(uploaded_file, emp, periodo='3Q23'):
-    # print(f"Archivo subido: {uploaded_file.name}")
-    # # print(f"Emp: {uploaded_file.getvalue()}")
-    # print(f"Emp: {emp.name}")
-    # print(f"Emp: {periodo}")
-    # print('-------------------')
-
     file_ = uploaded_file.getvalue()
     filename = uploaded_file.name
     empresa = emp.name
@@ -230,9 +235,9 @@ def get_upload_discovery(uploaded_file, emp, periodo='3Q23'):
         ).get_result()
 
         # Sube a la bd
-        client = MongoClient('mongodb+srv://gather_admin:gather@test.qh72oob.mongodb.net/')
+        client = get_mongo_client()
 
-        db = client['test_pdf']
+        db = client['ibmclouddb']
         col_pdf = db['pdf']
 
         col_pdf.insert_one({

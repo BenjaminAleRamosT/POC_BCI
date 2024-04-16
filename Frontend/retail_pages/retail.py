@@ -9,6 +9,7 @@ from Backend.emp.tools import displayPDF, get_files, clear_submit, get_summary, 
 from Backend.LLM.key_extractor import comparator_model
 
 from pymongo import MongoClient
+from Backend.credentials.Mongo import get_mongo_client
 
 import time
 from  Backend.JAVA_POWERBI.powerbi import render_js
@@ -52,6 +53,7 @@ def main_page(emp ,periodo='3Q23'):
     emp.get_resumen()
     # print('obtenemos ultima comparación')
     emp.get_last_comparation()
+    emp.procesar_documentos_pendientes()
     
     # print(emp.files)
 
@@ -385,7 +387,7 @@ def main_page(emp ,periodo='3Q23'):
     st.write("---")
 
 #----------------------| Retail |----------------------#
-def retail_page(name='Retail', sector='Retail', periodo='3Q23', client='cliente'):
+def retail_page(name='Retail', sector='Retail', periodo='3Q23', client=get_mongo_client()):
     # print('------------------------')
     # print('>>> ', st.session_state['empresa'])
     # st.session_state["empresa"] = Empresa(name, sector, periodo, page)

@@ -65,205 +65,6 @@ os.environ["WATSONX_APIKEY"] = ibm_api_key
 
 company = "IBM"
 
-def llm_setup(ibm_api_key=ibm_api_key, openai_api_key=openai_api_key,company="IBM"):
-    company = "IBM"
-    if company == 'IBM':
-        # print('IBM')
-#         api_key = ibm_api_key
-#         model = 'meta-llama/llama-2-70b-chat'
-#         parameters = {
-#     "decoding_method": "sample",
-#     "max_new_tokens": 4000,
-#     "min_new_tokens": 1,
-#     "temperature": 0.7,
-#     "top_k": 50,
-#     "top_p": 1,
-# }
-#         llm = WatsonxLLM(
-#     model_id=model,
-#     url="https://us-south.ml.cloud.ibm.com",
-#     project_id="c4faff81-af63-4f31-820d-4e0bf3808f93",
-#     params=parameters,
-# )
-    # Paste your Watson Machine Learning service apikey here
-        apikey = "5z1h-psruiL1HejXYzjOW0glrUC8CAGA4FEDXb_db1jF"
-
-        # Get an IAM token from IBM Cloud
-        url = "https://iam.cloud.ibm.com/identity/token"
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        data = "apikey=" + apikey + "&grant_type=urn:ibm:params:oauth:grant-type:apikey"
-        response = requests.post(url, headers=headers, data=data)
-        iam_token = response.json()["access_token"]
-
-        return iam_token
-
- 
-        
-    elif company == 'OpenAI':
-        api_key = openai_api_key
-        model = 'gpt-3.5-turbo-0125'
-    
-    return llm
-
-# <- Función de extracción de keypoints ->
-def keypoints_extr(file_, company=company, chunk_size=4500, chunk_overlap=1000, prints=False):
-    
-    keyparts = list()
-
-    r_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=chunk_overlap
-    )
-
-    template = """<|text|>
-{topic}.
-
-<|system|>
-Performs a comprehensive and objective analysis of the provided TEXT, identifying and highlighting all key events, important data, and relevant facts without adding personal interpretations or additional information. Ensure to fully address all topics covered in the article and provide a detailed and clear summary of each relevant aspect. You always have to answer in Spanish.
-
-<|important|>
-- The format of the output must be identical to the FORMAT OUTPUT. Indicate with '->' the beginning of each important point.
-- Do not add titles or headings, only complete sentences are allowed.
-- The characters '->' should only be used to indicate the beginning of each key point. Do not use it anywhere else in the summary, and you cannot use another symbol to indicate the start of another point. All should be at the same level to respect the structure.
-- Each key point must be a complete sentence; do not add titles or general concepts. You cannot divide a sentence into two key points, nor can you divide a key point into sub-points.
-- Each key point must be relevant to the article.
-- You cannot add information not in the article. You can only extract information from the article.
-- Do not repeat key points.
-- Always consider important data related to a person from the company, such as the CEO, CFO, or any other relevant person.
-- The output must be translated to Spanish.
-
-<|format outpu|>
--> <Key point 1>.
--> <Key point 2>.
--> <Key point 3>.
-...
-
-<|output|>
-"""
-
-    llm = llm_setup(company=company, openai_api_key=openai_api_key, ibm_api_key=ibm_api_key)
-    
-    prompt= PromptTemplate.from_template(template)
-    llm_chain = LLMChain(prompt=prompt, llm=llm)
-
-    texto_split = r_splitter.split_text(file_)
-
-    # if prints:
-    #     print(f'Total of chunks: {len(texto_split)}')
-    
-    for i, chunk in enumerate(texto_split):
-        # check time for each iteration
-        start = time.time()
-
-        res = llm_chain.invoke(chunk)['text'].strip('\n')
-
-        # if prints:
-        #     for head in res.split('->')[:4]:
-        #         print(f'- {head.strip()}')
-        
-        keyparts = keyparts + res.split('->')
-
-        # if prints:
-        #     print(f'Chunk {i}: Time{time.time() - start}')
-        #     print('-----------')
-
-    return keyparts
-
-
-
-def keypoints_resum(keyparts,company=company, ibm_api_key= ibm_api_key ,openai_api_key=openai_api_key, chunk_size=4500, chunk_overlap=1000, prints=False):
-
-    keyparts_filtered = [x.strip('\n').strip(' ') for x in keyparts if len(x) > 10]
-    
-    template = """<|text|>
-    "{topic}".
-
-    <|system|>
-    Provide a comprehensive and objective analysis of the provided list of key points, identifying and highlighting all key events, important data, and relevant facts without adding personal interpretations or additional information. Ensure to fully address all topics covered in the list and provide a detailed and clear summary of each relevant aspect.
-    The output must be at leats three pargraphs long and max five paragraph. Use the most amount of words possible to provide a detailed and clear summary of each relevant aspect. 
-    If the information is enough the output must be at least 1500 words long.
-
-    <|important|>
-    - You cannot add information not in the key points. You can only extract information from the list of key points.
-    - The output must be translated to Spanish.
-    - Only provide the text of the key points, do not add any additional information.
-    - Topics like: REVENUE, EBITDA, NET INCOME, DEBT, CASH, must be included in the output. If the information is not provided in the key points, say "Information not provided".
-    - Always consider important data related to a person from the company, such as the CEO, CFO, or any other relevant person.
-
-    <|output|>
-    """
-
-    test_keyparts = ''
-    llm = llm_setup(ibm_api_key=ibm_api_key,openai_api_key=openai_api_key, company=company)
-    prompt_resumen = PromptTemplate.from_template(template)
-    open_chain_resumen = LLMChain(prompt=prompt_resumen, llm=llm)
-
-    for x in keyparts_filtered:
-        test_keyparts += x + '\n'
-
-    # if prints:
-    #     print(f'Total of chunks: {len(test_keyparts)}')
-    # check time for each iteration
-    start = time.time()
-
-    resumen = open_chain_resumen.invoke(test_keyparts)['text']
-
-    # if prints:
-    #     print(f'Chunk: Time{time.time() - start}')
-    #     print('-----------')
-
-    return resumen
-
-def resumen_empresarial(res_pen, company="IBM", ibm_api_key=ibm_api_key, openai_api_key=openai_api_key, chunk_size=4500, chunk_overlap=1000, prints=False):
-
-    id_ = res_pen['_id']
-    empresa = res_pen['empresa']
-    periodo = res_pen['periodo']
-    files = res_pen['files']
-    
-    resumenes = ""
-    for file_ in files:
-        # print(file_['filename'])
-
-        resumenes += f"- {file_['filename']}: \n {file_['resumen']}" + '\n'
-    
-    template = """<|files|>
-    "{topic}".
-
-    ##SYSTEM: Your job is to provide a comprehensive and objective analysis of the provided list files, identifying and highlighting all key events, important data, and relevant facts without adding personal interpretations or additional information. Ensure to fully address all topics covered in the list and provide a detailed and clear summary of each relevant aspect.
-    The output must be at leats five pargraphs long and max ten paragraph. Use the most amount of words possible to provide a detailed and clear summary of each relevant aspect. 
-    If the information is enough the output must be at least 1500 words long. Is more important information about Chile than the rest of the world.
-   
-    <|important|>
-    - The output must be at leats five pargraphs long and max ten paragraph.
-    - You cannot add information that is not in the files. You can only extract information from the list of files.
-    - Always consider important data related to a person from the company, such as the CEO, CFO, or any other relevant person.
-    - The output must be translated to Spanish.
-    - Topics like: REVENUE, EBITDA, NET INCOME, DEBT, CASH, must be included in the output. If the information is not provided in the key points, say "Information not provided".
-
-    <|output|>
-    """
-
-    test_keyparts = ''
-    llm = llm_setup(ibm_api_key=ibm_api_key,openai_api_key=openai_api_key, company=company)
-    prompt_resumen = PromptTemplate.from_template(template)
-    open_chain_resumen = LLMChain(prompt=prompt_resumen, llm=llm)
-
-    # if prints:
-    #     print(f'Total of chunks: {len(test_keyparts)}')
-    # check time for each iteration
-    start = time.time()
-
-    resumen = open_chain_resumen.invoke(resumenes)['text']
-
-    # if prints:
-    #     print(f'Chunk: Time{time.time() - start}')
-    #     print('-----------')
-
-    # print(resumen)
-    # actualizamos
-    col_res.update_one({'_id': id_}, {'$set': {'resumen': resumen}})
-    return resumen
 
 def comparator_model(text_1_dict,text_2_dict,empresa,openai_api_key=openai_api_key, ibm_api_key=ibm_api_key, company=company):
 
@@ -273,60 +74,7 @@ def comparator_model(text_1_dict,text_2_dict,empresa,openai_api_key=openai_api_k
     name_1 = text_1_dict["name"]
     name_2 = text_2_dict["name"]
 
-    # print('comparando')
-
-#     template = f"""<|text 1 |>
-# {name_1}: "{{text_1}}".
-
-# <|text 2 |>
-# {name_2}: "{{text_2}}".
-
-# <|system|>
-# Perform a comparison between '{name_1}' and '{name_2}', highlighting the key differences in both general and specific contents, including the type of document each text represents (e.g., financial statement, call transcript, interview format). Focus on significant statistical variations related to their temporal contexts, if available, and explicitly mention and compare statistical percentages when discussing increases or decreases. Present your findings in a format that emphasizes the crucial points of distinction without using titles or headings. Ensure that the comparison delves into how these differences contribute to the overall understanding of the context and implications of each summary. Assess the sentiment of each document concerning the highlights in the data of each document and contrast these analyses. The output must adhere strictly to the specified format, beginning each important point with '->' and excluding titles or headings in favor of complete sentences. Use '->' solely to mark the start of each key point, maintaining uniformity in the structure. Every key difference should form a complete sentence, devoid of titles or general concepts, and must be directly relevant to the article without introducing external information. Refrain from repeating key differences and always mention the document by its name. The output should be consistently translated into Spanish, and the summary should be coherent and aligned with the context of the documents.
-
-# <|important|>
-# - The output format must be identical to the OUTPUT FORMAT. Indicate with '->' the beginning of each important point.
-# - Do not add titles or headings, only complete sentences are allowed.
-# - The characters '->' should only be used to indicate the beginning of each key point. Do not use them elsewhere in the summary, and you cannot use another symbol to indicate the start of another point. All should be at the same level to respect the structure.
-# - Each key difference must be a complete sentence; do not add titles or general concepts. You cannot divide a sentence into two key points, nor can you divide a key point into sub-points.
-# - Each key difference must be relevant to the article.
-# - You cannot add information that is not in the article. You can only extract information from the texts.
-# - Do not repeat key differences.
-# - Always refer to the document by its name.
-# - The summary must be coherent and consistent with the context of the documents.
-# - The output format of Verbose key differences don´t need to call all the time the name of the document, only the first time.
-# - The output must always be translated into Spanish.
-
-# <|output format|>
-# **DIFERENCIAS:**
-# -> <Verbose key difference 1>.
-# -> <Verbose key difference 2>.
-# -> <Verbose key difference 3>.
-# -> <Verbose key difference 4>.
-# -> <Verbose key difference 5>.
-# -> ...
-
-# -> **DOCUMENTO 1:**
-
-# <Verbose content analysis of {name_1}>.
-
-# -> **DOCUMENTO 2:**
-
-# <Verbose content analysis of {name_2}>.
-
-# #### RESUMEN DE LAS DIFERENCIAS:
-# <Summary of differences content>.
-
-# <|output|>
-# """ 
-    
-#     llm = llm_setup(ibm_api_key=ibm_api_key,openai_api_key=openai_api_key, company=company)
-#     prompt = PromptTemplate.from_template(template)
-#     open_chain = LLMChain(prompt=prompt , llm=llm)
-
-#     diferencias = open_chain.invoke(input={"text_1":text_1,"text_2":text_2})["text"]
-#     print(diferencias)
-    iam_token = llm_setup(ibm_api_key=ibm_api_key,openai_api_key=openai_api_key, company=company)
+    iam_token = get_iam_token()
     url = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29"
 
     body = {
@@ -430,6 +178,97 @@ def comparator_model(text_1_dict,text_2_dict,empresa,openai_api_key=openai_api_k
         # print("Se ha creado la última comparación")
 
     return "\n".join(diferencias.split("->"))
+
+def get_iam_token(apikey= "5z1h-psruiL1HejXYzjOW0glrUC8CAGA4FEDXb_db1jF"):
+
+
+
+    # Get an IAM token from IBM Cloud
+    url = "https://iam.cloud.ibm.com/identity/token"
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    data = "apikey=" + apikey + "&grant_type=urn:ibm:params:oauth:grant-type:apikey"
+    response = requests.post(url, headers=headers, data=data)
+    iam_token = response.json()["access_token"]
+
+    return iam_token
+
+
+def dividir_texto(texto, longitud_segmento):
+    return [texto[i:i + longitud_segmento] for i in range(0, len(texto), longitud_segmento)]
+
+def LLM_INTRODUCTION_BANCA(texto):
+    iam_token = get_iam_token()
+    url = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29"
+
+    body = {
+        "input": f"""[INST] <<SYS>>
+    Crea un resumen en español, conciso y coherente de las primeras páginas de un documento en español, destacando los aspectos clave y el propósito del contenido de no mas de 1000 palabras.
+<</SYS>>
+{texto}[/INST]""",
+        "parameters": {
+		"decoding_method": "greedy",
+		"max_new_tokens": 2000,
+		"repetition_penalty": 1.05
+	},
+        "model_id": "meta-llama/llama-2-70b-chat",
+        "project_id": "c4faff81-af63-4f31-820d-4e0bf3808f93"
+    }
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {iam_token}"}
+
+    response = requests.post(
+        url,
+        headers=headers,
+        json=body
+    )
+
+    if response.status_code != 200:
+        raise Exception("Non-200 response: " + str(response.text))
+
+    data = response.json()
+    return data
+
+def obtener_keypoints(texto):
+    iam_token = get_iam_token()
+
+    url = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29"
+
+    body = {
+        "input": f"""[INST] <<SYS>>
+    Crea un listado de los puntos claves de el siguiente fragmento de documento, el listado debe ser en español y no debe superar las 1000 palabras.
+    El formato debe ser una lista que enumere los puntos claves de el texto con un · al inicio de cada punto.
+<</SYS>>
+{texto}[/INST]""",
+        "parameters": {
+		"decoding_method": "greedy",
+		"max_new_tokens": 2000,
+		"repetition_penalty": 1.05
+	},
+        "model_id": "meta-llama/llama-2-70b-chat",
+        "project_id": "c4faff81-af63-4f31-820d-4e0bf3808f93"
+    }
+
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {iam_token}"}
+
+    response = requests.post(
+        url,
+        headers=headers,
+        json=body
+    )
+
+    if response.status_code != 200:
+        raise Exception("Non-200 response: " + str(response.text))
+
+    data = response.json()
+    return data
+
+
 
 
 

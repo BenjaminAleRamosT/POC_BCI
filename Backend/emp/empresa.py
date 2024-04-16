@@ -4,6 +4,12 @@ import pandas as pd
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import math
+import concurrent.futures
+import os
+from Backend.credentials.Mongo import get_mongo_client
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_watson import DiscoveryV2
+
 
 class Empresa:
     def __init__(self, name, sector, periodo,cliente):
@@ -23,12 +29,17 @@ class Empresa:
 
         self.pending_files = []
 
-
         self.resumenes = []
 
         self.last_comparation = None
 
         self.client = cliente
+        self.col_pdf = get_mongo_client()['ibmclouddb']['pdf']
+
+        self.project_id = None
+        self.collection_id = None
+
+        self.obtain_ids()
         
     def __str__(self):
         return f"{self.name} is a company in the {self.sector} sector"
@@ -36,13 +47,28 @@ class Empresa:
     def __repr__(self):
         return f"{self.name} is a company in the {self.sector} sector"
     
+    def obtain_ids(self):
+        # obtengamos del .env el project_id y el collection_id
+        self.project_id = os.environ.get("PROJECT_ID")
+        self.collection_id = os.environ.get("COLLECTION_ID")
+        api_wd = os.environ.get("API_WD")
+
+        authenticator = IAMAuthenticator(api_wd)
+
+        # definamos un cliente de discovery
+        self.discovery = DiscoveryV2(
+            version='2024-03-03',
+            authenticator=authenticator
+        )
+
+    
     
 
     # def show_page(self):
     #     self.page(self.name)
     def generar_resumen(self):
         # Creamos una base de datos llamada 'test_resumenes'
-        db = self.client['test_pdf']
+        db = self.client['ibmclouddb']
         col_pdf = db['pdf']
         # Creamos una colección llamada 'resumenes'
         col_resumenes = db['resumenes']
@@ -72,22 +98,66 @@ class Empresa:
     def get_resumen(self):
         print('obtenemos resumenes')
         # Creamos una base de datos llamada 'test_resumenes'
-        db = self.client['test_pdf']
+        db = self.client['ibmclouddb']
         print('db')
         # Creamos una colección llamada 'resumenes'
         col_resumenes = db['resumenes']
         print('col')
 
         self.resumenes = list(col_resumenes.find({"empresa": self.name, "periodo": self.periodo}).sort("_id", -1).limit(2))
-        
-        print('resumenes')
+
     def get_last_comparation(self):
-        db = self.client["test_pdf"]
+        db = self.client["ibmclouddb"]
         col = db["comparaciones"]
         print(f"Buscando comparaciones de {self.name}")
         self.last_comparation = [x for x in col.find({"empresa": self.name})]
 
+    def procesar_documento(self, row):
+        print(f"Archivo: {row['filename']}, Status: {row['status']}")
+        print('Obteniendo documento...')
+        r = self.discovery.get_document(
+            project_id=self.project_id, 
+            collection_id=self.collection_id,
+            document_id=row['id'],
+        ).get_result()
+
+        if r['status'] == 'available':
+            print('El archivo ya está disponible')
+            response = self.discovery.query(
+                project_id=self.project_id, 
+                collection_ids=[self.collection_id], 
+                natural_language_query='', 
+                count=100
+            ).get_result()
+
+            selected = next((i for i in response['results'] if i['document_id'] == row['id']), None)
+            if selected:
+                doc_ = {
+                    'id': selected['document_id'],
+                    'num_pages': selected['extracted_metadata']['numPages'],
+                    'filename': selected['extracted_metadata']['filename'],
+                    'filetype': selected['extracted_metadata']['file_type'],
+                    'text': '\n'.join(selected['only_text'])
+                }
+
+                print('Actualizando en la base de datos')
+                self.col_pdf.update_one({'id': row['id']}, {'$set': {
+                    'status': 'ready',
+                    'texto': doc_['text']
+                }})
+
+    def procesar_documentos_pendientes(self):
+        df_pending = list(self.col_pdf.find({'status': {'$ne': 'ready'}}))
+        if not df_pending:
+            print('No hay archivos pendientes')
+        else:
+            print('Hay archivos pendientes')
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(self.procesar_documento, df_pending)
+
         
+
+
 
     #<----------------- XBRL----------------->
     def process_data(self,path_general):

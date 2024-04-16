@@ -13,9 +13,9 @@ div .block-container.st-emotion-cache-z5fcl4.ea3mdgi5> :nth-child(1)> :nth-child
     z-index: 1;
 
     /* height: 500px;
-    width: 500px; */
+    width: 380px; */
     
-    background-color: rgba(0,0, 0, 0);
+    background: transparent;
     padding: 10px;
     border-top-right-radius: 10px;
 
