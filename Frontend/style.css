@@ -5,7 +5,6 @@ body {
     width: 12px; /* Ancho de la barra de desplazamiento */
     z-index: 9999; /* Establecer la barra de desplazamiento por encima de todo */
 }
-
 div .block-container.st-emotion-cache-z5fcl4.ea3mdgi5> :nth-child(1)> :nth-child(1)> :nth-child(1)> :nth-child(2){
     position: fixed;
     bottom: 0;
@@ -18,7 +17,6 @@ div .block-container.st-emotion-cache-z5fcl4.ea3mdgi5> :nth-child(1)> :nth-child
     background-color: rgba(0,0, 0, 0);
     padding: 10px;
     border-top-right-radius: 10px;
-
 } 
 
 
