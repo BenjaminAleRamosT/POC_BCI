@@ -10,6 +10,7 @@ def render_js(selected_option):
 
 
     html_code = """<script src="https://cdnjs.cloudflare.com/ajax/libs/powerbi-client/2.23.1/powerbi.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.js"></script>
 
       <div id="powerbi-container" style="display: flex; height: 500px; width: 100%"></div>
 
@@ -18,11 +19,12 @@ def render_js(selected_option):
 
   var embedConfiguration = {
       type: 'report',
+      id: '03e320e4-9d78-464f-a88e-53fca11121ea',
       tokenType: models.TokenType.Embed,
-      viewMode: models.ViewMode.View,
-      accessToken: '"""+ tk.accessToken() +"""',
+      permissions: models.Permissions.All,
+      viewMode: models.ViewMode.ReadWrite,
+      accessToken: '"""+ str(tk.accessToken()) +"""',
       embedUrl: 'https://app.powerbi.com/reportEmbed?reportId=03e320e4-9d78-464f-a88e-53fca11121ea&groupId=48485820-2463-4595-b7e3-851c901e537d&w=2&config=eyJjbHVzdGVyVXJsIjoiaHR0cHM6Ly9XQUJJLVNPVVRILUNFTlRSQUwtVVMtQy1QUklNQVJZLXJlZGlyZWN0LmFuYWx5c2lzLndpbmRvd3MubmV0IiwiZW1iZWRGZWF0dXJlcyI6eyJ1c2FnZU1ldHJpY3NWTmV4dCI6dHJ1ZX19',
-      id: '8d5d11b5-12ab-4944-ab6f-9361b8258ed2',
       settings: {
           filterPaneEnabled: false,
           navContentPaneEnabled: false,
