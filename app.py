@@ -9,7 +9,6 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
 
-print(os.environ.get("CONNECTION_STRING"))
 
 
 
@@ -44,7 +43,7 @@ components.html("""
     document.head.appendChild(t);
   });
 </script>
-                """, height=500)
+                """, height=500, width=318)
                 
               
 
@@ -52,13 +51,14 @@ components.html("""
 
 # Add logo bottom of the sidebar
 img_ = os.path.join('DATA','img','nuevo_logo_gather_grande.png')
+contacto_ = os.path.join('DATA','img','contacto_veronica.jpeg')
 
 if selected_sector == "Retail":
     page_names_to_empresa= {
     "Resumen Sectorial": main_page,
     "otro": retail_page,
     }
-    page_names_to_empresa_list = ['Resumen Sectorial', 'Falabella', 'Cencosud', 'SMU', 'Hites', 'Forus', 'Tricot', 'Ripley', 'Hites']
+    page_names_to_empresa_list = ['Resumen Sectorial', 'Falabella', 'Cencosud', 'SMU', 'Hites', 'Forus', 'Tricot', 'Ripley']
     
     selected_page_2 = st.sidebar.selectbox("Selecciona Empresa", page_names_to_empresa_list)
 
@@ -74,5 +74,16 @@ else:
  
 
 st.sidebar.image(img_, use_column_width=True)
+
+# coloquemos la imagen en la sidebar pero abajo
+st.sidebar.markdown('---')
+st.sidebar.markdown('\n')
+st.sidebar.markdown('\n')
+st.sidebar.markdown('\n')
+st.sidebar.markdown('\n')
+st.sidebar.markdown('\n')
+st.sidebar.markdown('\n')
+st.sidebar.markdown('Contacto:')
+st.sidebar.image(contacto_, use_column_width=True)
 
 

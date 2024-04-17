@@ -172,10 +172,10 @@ def comparator_model(text_1_dict,text_2_dict,empresa,openai_api_key=openai_api_k
     # si ya existe, lo actualizamos
     if col_comp.find_one({"id":"Last_comp"}):
         col_comp.update_one({"id":"Last_comp"}, {"$set": comp_to_db})
-        # print("Ultima comparación actualizada")
+        # #print("Ultima comparación actualizada")
     else:
         col_comp.insert_one(comp_to_db)
-        # print("Se ha creado la última comparación")
+        # #print("Se ha creado la última comparación")
 
     return "\n".join(diferencias.split("->"))
 
@@ -202,7 +202,7 @@ def LLM_INTRODUCTION_BANCA(texto):
 
     body = {
         "input": f"""[INST] <<SYS>>
-    Crea un resumen en español, conciso y coherente de las primeras páginas de un documento en español, destacando los aspectos clave y el propósito del contenido de no mas de 1000 palabras.
+    Crea un resumen, conciso y coherente de las primeras páginas de un documento en español, destacando los aspectos clave y el propósito del contenido de no mas de 1000 palabras. El idioma del texto generado debe ser en Español.
 <</SYS>>
 {texto}[/INST]""",
         "parameters": {
@@ -229,7 +229,7 @@ def LLM_INTRODUCTION_BANCA(texto):
         raise Exception("Non-200 response: " + str(response.text))
 
     data = response.json()
-    return data
+    return data["results"][0]["generated_text"]
 
 def obtener_keypoints(texto):
     iam_token = get_iam_token()
@@ -239,7 +239,7 @@ def obtener_keypoints(texto):
     body = {
         "input": f"""[INST] <<SYS>>
     Crea un listado de los puntos claves de el siguiente fragmento de documento, el listado debe ser en español y no debe superar las 1000 palabras.
-    El formato debe ser una lista que enumere los puntos claves de el texto con un · al inicio de cada punto.
+    El formato debe ser una lista que enumere los puntos claves de el texto con un '-' al inicio de cada punto.
 <</SYS>>
 {texto}[/INST]""",
         "parameters": {
@@ -266,84 +266,41 @@ def obtener_keypoints(texto):
         raise Exception("Non-200 response: " + str(response.text))
 
     data = response.json()
-    return data
+    return data["results"][0]["generated_text"]
 
+def difference_texts(texto1,texto2):
+    iam_token = get_iam_token()
 
+    url = "https://us-south.ml.cloud.ibm.com/ml/v1/text/generation?version=2023-05-29"
 
+    body = {
+        "input": f"""[INST] <<SYS>>
+    Crea un parrafo que describa las diferencias del contenido entre los siguientes textos, el parrafo debe ser en español y no debe superar las 1100 palabras.
+<</SYS>>
+texto 1:{texto1}
+texto 2: {texto2}[/INST]""",
+        "parameters": {
+		"decoding_method": "greedy",
+		"max_new_tokens": 3000,
+		"repetition_penalty": 1.05
+	},
+        "model_id": "meta-llama/llama-2-70b-chat",
+        "project_id": "c4faff81-af63-4f31-820d-4e0bf3808f93"
+    }
 
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {iam_token}"}
 
-while False:
-    df_pending = [x for x in col_pdf.find({'status': {'$ne': 'ready'}})]
-    print([x['filename'] for x in df_pending])  
-    if len(df_pending) == 0:
-        print('No hay archivos pendientes')
-    else:
-        print('Hay archivos pendientes')
-        for index, row in enumerate(df_pending):
-            print(f"Archivo: {row['filename']}, Status: {row['status']}")
-            print(row['id'])
-            # preguntamos al discovery si ya terminó
-            r = discovery.get_document(
-                project_id=project_id,
-                collection_id=collection_id,
-                document_id=row['id'],
-                ).get_result()
-            if r['status'] == 'available':
-                print('El archivo ya está disponible')
-                response = discovery.query(project_id=project_id, collection_ids=[collection_id], natural_language_query='', count=100).get_result()
-                # seleccionamos solo la que corresponde al archivo
-                
-                selected = [i for i in response['results'] if i['document_id'] == row['id']][0]
-                doc_ = dict()
-                # Resultados -> response['results'][X]
-                # Documentos -> document_id
-                # Metadata -> extracted_metadata
-                #                      -> numPages
-                #                      -> filename
-                #                      -> file_type
-                # Texto extraido -> only_text
-                doc_['id'] = selected['document_id']
-                doc_['num_pages'] = selected['extracted_metadata']['numPages']
-                doc_['filename'] = selected['extracted_metadata']['filename']
-                doc_['filetype'] = selected['extracted_metadata']['file_type']
-                doc_['text'] = '\n'.join(selected['only_text'])
-                # print(doc_['text']) 
+    response = requests.post(
+        url,
+        headers=headers,
+        json=body
+    )
 
-                # Actualizamos en la base de datos
-                # col_pdf.update_one({'id': row['id']}, {'$set': {'status': 'ready', 'text': doc_['text']}})
+    if response.status_code != 200:
+        raise Exception("Non-200 response: " + str(response.text))
 
-                # Generamos keypoints
-                print('Generando keypoints')
-                keypoints = keypoints_extr(doc_['text'], openai_api_key, prints=False)
-                print('Generando resumen')
-                resumen = keypoints_resum(keypoints, openai_api_key, prints=False)
-                doc_['keypoints'] = keypoints # lista con keypoints
-                doc_['resumen'] = resumen
-                print('------------------')
-                
-                # abrimos el archivo
-                # with open(f'{row["doc"]}'[1:], 'rb') as file:
-                # #     # encoded_string = base64.b64encode(file.read()).decode('utf-8')
-                # #     # doc_['doc'] = encoded_string
-                #     pass
-
-                print('Actualizando en la base de datos')
-                
-                # Actualizamos en la base de datos
-                col_pdf.update_one({'id': row['id']}, {'$set': {'keypoints': doc_['keypoints'], 'resumen': doc_['resumen'], 'status': 'ready', 'texto': doc_['text']}})
-                print('------------------')
-                
-    #         break
-    resumenes_pendientes = [x for x in col_res.find({'resumen': 'XXX'})]
-    for res_pen in resumenes_pendientes:
-        print('Generando resumen empresarial')
-        print(f'Empresa: {res_pen["empresa"]}, Periodo: {res_pen["periodo"]}')
-        resumen = resumen_empresarial(res_pen, openai_api_key, prints=False)
-    time.sleep(60)
-    
-
-
-# <- FastAPI ->
-
-
-
+    data = response.json()
+    return data["results"][0]["generated_text"]

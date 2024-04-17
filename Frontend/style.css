@@ -12,11 +12,11 @@ div .block-container.st-emotion-cache-z5fcl4.ea3mdgi5> :nth-child(1)> :nth-child
     right: 13px;
     z-index: 1;
 
-    /* height: 500px;
-    width: 380px; */
+    height: 500px;
+    width: 318px;
     
     background: transparent;
-    padding: 10px;
+    padding: 0px;
     border-top-right-radius: 10px;
 
 } 

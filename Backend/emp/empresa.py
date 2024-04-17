@@ -9,6 +9,7 @@ import os
 from Backend.credentials.Mongo import get_mongo_client
 from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
 from ibm_watson import DiscoveryV2
+from Backend.LLM.key_extractor import LLM_INTRODUCTION_BANCA, dividir_texto,obtener_keypoints
 
 
 class Empresa:
@@ -77,44 +78,44 @@ class Empresa:
         return
     
     def get_files(self):
-        print('getting files')
+        #print('getting files')
         
         if self.files == None:
-            # print(f"khgkjgjkhg {self.archivos_seleccionados} no está en archivos seleccionados")
-            print('>>>>>>>>>>>>>No tiene archivos')
+            # #print(f"khgkjgjkhg {self.archivos_seleccionados} no está en archivos seleccionados")
+            #print('>>>>>>>>>>>>>No tiene archivos')
             self.files = get_files(self.name, client=self.client)
             self.archivos_seleccionados = []
         else:
-            print('Ya tiene archivos')
+            #print('Ya tiene archivos')
             self.files = get_files(self.name, client=self.client)
             # for archivo in self.files:
             #     if archivo not in self.archivos_seleccionados:
-            #         print(f"Archivo {self.archivos_seleccionados} no está en archivos seleccionados")
+            #         #print(f"Archivo {self.archivos_seleccionados} no está en archivos seleccionados")
             #         self.archivos_seleccionados[archivo] = False
 
     def get_table(self):
         self.table = "table"
 
     def get_resumen(self):
-        print('obtenemos resumenes')
+        #print('obtenemos resumenes')
         # Creamos una base de datos llamada 'test_resumenes'
         db = self.client['ibmclouddb']
-        print('db')
+        #print('db')
         # Creamos una colección llamada 'resumenes'
         col_resumenes = db['resumenes']
-        print('col')
+        #print('col')
 
         self.resumenes = list(col_resumenes.find({"empresa": self.name, "periodo": self.periodo}).sort("_id", -1).limit(2))
 
     def get_last_comparation(self):
         db = self.client["ibmclouddb"]
         col = db["comparaciones"]
-        print(f"Buscando comparaciones de {self.name}")
+        #print(f"Buscando comparaciones de {self.name}")
         self.last_comparation = [x for x in col.find({"empresa": self.name})]
 
     def procesar_documento(self, row):
-        print(f"Archivo: {row['filename']}, Status: {row['status']}")
-        print('Obteniendo documento...')
+        #print(f"Archivo: {row['filename']}, Status: {row['status']}")
+        #print('Obteniendo documento...')
         r = self.discovery.get_document(
             project_id=self.project_id, 
             collection_id=self.collection_id,
@@ -122,7 +123,7 @@ class Empresa:
         ).get_result()
 
         if r['status'] == 'available':
-            print('El archivo ya está disponible')
+            #print('El archivo ya está disponible')
             response = self.discovery.query(
                 project_id=self.project_id, 
                 collection_ids=[self.collection_id], 
@@ -140,7 +141,7 @@ class Empresa:
                     'text': '\n'.join(selected['only_text'])
                 }
 
-                print('Actualizando en la base de datos')
+                #print('Actualizando en la base de datos')
                 self.col_pdf.update_one({'id': row['id']}, {'$set': {
                     'status': 'ready',
                     'texto': doc_['text']
@@ -154,6 +155,32 @@ class Empresa:
             print('Hay archivos pendientes')
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 executor.map(self.procesar_documento, df_pending)
+
+    def create_summary(self,filename):
+        #filename = self.archivos_seleccionados[0]
+        # buscaremos en la base de datos el texto del documento
+        col = self.col_pdf
+        doc = col.find_one({'filename':
+                            filename})
+        if doc is None:
+            return 1
+        else:
+            texto = doc['texto']
+            texto_divido = dividir_texto(texto, 1700)
+            summary = LLM_INTRODUCTION_BANCA(texto_divido[0])
+            return summary
+        
+    def create_keypoints(self,filename):
+        col = self.col_pdf
+        doc = col.find_one({'filename':
+                            filename})
+        if doc is None:
+            return 1
+        else:
+            texto = doc['texto']
+            texto_divido = dividir_texto(texto, 1700)
+            keypoints = obtener_keypoints(texto_divido[0])
+            return keypoints
 
         
 

@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from  Backend.credentials.Mongo import get_mongo_client
-from Backend.emp.empresa import Empresa
 
 
 def add_file(filename=None, empresa=None, sector=None, periodo=None, year=None, trimestre=None, doc=None, key=None, resumen=None ):
@@ -55,9 +54,9 @@ def add_file(filename=None, empresa=None, sector=None, periodo=None, year=None, 
 
 def get_files(filename='Empresa', period='3Q23', api_key= 'api', client=None):
 
-    # print(f">> Getting files for {filename} in the period {period} using the api")
+    # #print(f">> Getting files for {filename} in the period {period} using the api")
 
-    # print(os.listdir('../files'))
+    # #print(os.listdir('../files'))
     # ruta_files = './files.csv'
     year = '20' + period.split('Q')[1]
     quarter = period.split('Q')[0]
@@ -67,14 +66,14 @@ def get_files(filename='Empresa', period='3Q23', api_key= 'api', client=None):
 
     #dummy files
     # with open('./dummy_files.csv', 'r') as file:
-    #     print(set(file.read().split(',')))
+    #     #print(set(file.read().split(',')))
 
 
-    # print(f"Year: {year}, Quarter: {quarter}, Empresa: {filename}")
+    # #print(f"Year: {year}, Quarter: {quarter}, Empresa: {filename}")
 
     # path
     # path = ruta_files + name + '/' + year 
-    # # print(os.listdir(ruta_files + name + '/' + year + '/' + year +quarter))
+    # # #print(os.listdir(ruta_files + name + '/' + year + '/' + year +quarter))
     # list_files = os.listdir(ruta_files + name + '/' + year + '/' + year +quarter)
 
     name = 'Empresa'
@@ -101,7 +100,7 @@ def get_files(filename='Empresa', period='3Q23', api_key= 'api', client=None):
                 "status": "ready"
             },  
         }
-        # print(f"Fake files: {fake_files.keys()}")
+        # #print(f"Fake files: {fake_files.keys()}")
 
 
     dict_files = dict()
@@ -121,21 +120,13 @@ def get_files(filename='Empresa', period='3Q23', api_key= 'api', client=None):
            "status": doc['status']
        }
 
-    # print(f"Files__: {dict_files}")
+    # #print(f"Files__: {dict_files}")
  
     return dict_files
 
         
 def clear_submit():
     st.session_state["submit"] = False
-
-
-def create_summary(emp:Empresa,filename:str):
-    # buscaremos en la base de datos el te
-
-
-    
-
 
 def displayPDF(uploaded_file):
     
@@ -147,7 +138,7 @@ def displayPDF(uploaded_file):
         if uploaded_file[-3:] != 'pdf':
             uploaded_file = requests.get(uploaded_file).content
         else:
-            # print(os.listdir('../files'))
+            # #print(os.listdir('../files'))
             with open(uploaded_file, 'rb') as file:
                 uploaded_file = file.read()
 
@@ -158,7 +149,7 @@ def displayPDF(uploaded_file):
     # with NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
     #     tmp_file.write(uploaded_file)
     #     abrido = True
-    #     print(tmp_file.name)
+    #     #print(tmp_file.name)
 
     # Embed PDF in HTML
     pdf_display = F'<iframe src="data:application/pdf;base64,{base64_pdf}" width=100% height="600" type="application/pdf"></iframe>'
@@ -210,18 +201,18 @@ def get_upload_discovery(uploaded_file, emp, periodo='3Q23'):
     try:
         project = [pj for pj in discovery.list_projects().get_result()['projects'] if pj['name'] == pj_name][0]
     except:
-        # print('No se encontró el proyecto')
+        # #print('No se encontró el proyecto')
         return
     # Get the collection
     col_name = 'Onlytext-testing Collection 1'
     try:
         collection = [col for col in discovery.list_collections(project_id=project['project_id']).get_result()['collections'] if col['name'] == col_name][0]
     except:
-        # print('No se encontró la colección')
+        # #print('No se encontró la colección')
         return
 
-    # print(f"Project: {project['project_id']}")
-    # print(f"Collection: {collection['collection_id']}")
+    # #print(f"Project: {project['project_id']}")
+    # #print(f"Collection: {collection['collection_id']}")
 
     # Guardar temporalmente el archivo
     with NamedTemporaryFile(delete=False) as tmp_file:
@@ -260,7 +251,7 @@ def get_upload_discovery(uploaded_file, emp, periodo='3Q23'):
     
 
     os.remove(tmp_file.name) # Eliminar el archivo temporal
-    # print(add_doc)
+    # #print(add_doc)
 
     return 'response'
     # Wait until is process
