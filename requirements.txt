@@ -8,3 +8,4 @@ langchain
 ibm-cloud-sdk-core
 fastapi
 pydotenv
+python-dotenv

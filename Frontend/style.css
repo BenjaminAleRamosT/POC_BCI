@@ -5,6 +5,9 @@ body {
     width: 12px; /* Ancho de la barra de desplazamiento */
     z-index: 9999; /* Establecer la barra de desplazamiento por encima de todo */
 }
+.slicer-container{
+    display: None;
+}
 div .block-container.st-emotion-cache-z5fcl4.ea3mdgi5> :nth-child(1)> :nth-child(1)> :nth-child(1)> :nth-child(2){
     position: fixed;
     bottom: 0;

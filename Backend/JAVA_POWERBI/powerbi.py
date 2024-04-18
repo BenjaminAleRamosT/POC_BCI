@@ -35,8 +35,6 @@ def render_js(selected_option):
 
   var dashboard = powerbi.embed(dashboardContainer, embedConfiguration);
 
-    """
-    """
   var page
   var visual
   const basicFilter = {
@@ -59,11 +57,11 @@ def render_js(selected_option):
 
       page.getVisuals().then(function(visuals) {
               // 'visuals' es un array con todos los visuales de la página
-              for (var i = 0; i < visuals.length; i++) {
-                  var visual = visuals[i];
-                  console.log("Visual ID:", visual.type, i);
+              //for (var i = 0; i < visuals.length; i++) {
+              //    var visual = visuals[i];
+              //    console.log("Visual ID:", visual.type, i);
                   // Puedes trabajar con cada visual aquí
-              }
+              //}
           slicerVisual = visuals[1];
           console.log(slicerVisual)
 
@@ -90,8 +88,6 @@ def render_js(selected_option):
           }).catch(function(error) {
               console.error("Error al obtener los visuales:", error);
           });
-
-
   });
   });
 
