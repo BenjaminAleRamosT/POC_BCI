@@ -95,6 +95,7 @@ def main_page(emp ,periodo='3Q23'):
     st.markdown('----')
     
     # Ajuste para alinear el título secundario a la izquierda
+    st.markdown("##### NOTA: Al momento de subir un documento, se debe esperar a que se procese y generar un resumen, luego se habilitará el comparador de documentos para aquel documento")
     st.markdown("### Resumen Empresarial ‍💼")
     st.markdown("###### Principales Estados Financieros")
     
